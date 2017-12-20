@@ -1,5 +1,7 @@
 ## java基础
 
+C:\Users\sqsga\OneDrive\MeProjectsEx\java-server-interview-questions\README.md
+
 Arrays.sort实现原理和Collection实现原理
 foreach和while的区别(编译之后)
 线程池的种类，区别和使用场景
@@ -144,15 +146,79 @@ CMS是清除，所以会存在很多的内存碎片。G1是整理，所以碎片
 
 #### 新生代和老生代的内存回收策略
 
+>   堆大小 = 年轻代 + 老年代
+>   年轻代 = eden space (新生代) + from survivor + to survivor
+>   Minor GC 是发生在新生代中的垃圾收集动作，所采用的是复制算法
+>   Full GC 是发生在老年代的垃圾收集动作，所采用的是标记-清除算法
 
 
 #### Eden和Survivor的比例分配等
 
-#### 深入分析了Classloader，双亲委派机制
+>   初级回收将年轻代分为三个区域, 一个新生代 , 2个大小相同的复活代
+>   年轻代用来存放新近创建的对象
+>   尺寸随堆大小的增大和减小而相应的变化
+>   默认值是保持为堆大小的1/15
+>   可以通过 -Xmn 参数设置年轻代为固定大小
+>   也可以通过 -XX:NewRatio 来设置年轻代与老年代的大小比例
+
+参考:
+[Java 新生代、老年代、持久代、元空间](http://gblog.sherlocky.com/java-xin-sheng-dai-lao-nian-dai/ '0.0')
+
+#### 深入分析了 Classloader, 双亲委派机制
+类的加载过程指通过一个类的**全限定名**来获取描述此类的二进制字节流，
+并将其转化为**方法区**的数据结构，进而生成一个java.lang.Class对象作为方法区这个类各种数据访问的入口。
+这个过程通过Java中的类加载器(ClassLoader)来完成。
+
+类与类加载器
+类加载器非常重要，
+因为每个类加载器都有一个独立的类名称空间。
+比如我们要加载两个类，
+如果要比较两个类是否相等（包括equals()方法、isAssignableFrom()方法、isInstance()方法），
+只有在这两个类被同一个类加载器加载的前提下，比较才有意义。
+否则，即使两个类来自同一个class文件，被同一个JVM加载，但是加载它们的类加载器不同，则这两个类就不相等。
+这就相当于两个命名空间中的等价类LoaderA::C和LoaderB::C。
+
+类加载器的种类
+从一般角度来分的话，ClassLoader分为根加载器（Bootstrap ClassLoader）和其它的加载器。
+其中Bootstrap ClassLoader负责加载Java的核心类，由JVM实现(C++)，而其它类加载器都由Java层实现并继承java.lang.ClassLoader。
+
+更细分的话，ClassLoader分为：
+
+Bootstrap ClassLoader（启动类加载器）负责将%JAVA_HOME%/lib目录中或-Xbootclasspath中参数指定的路径中的，
+并且是虚拟机识别的（按名称）类库加载到JVM中
+Extension ClassLoader（扩展类加载器）负责加载%JAVA_HOME%/lib/ext中的所有类库
+System ClassLoader（加载%CLASSPATH%路径的类库）以及其它自定义的ClassLoader
+
+双亲委派模型
+JVM中类加载的机制——双亲委派模型。
+这个模型要求除了Bootstrap ClassLoader外，其余的类加载器都要有自己的父加载器。
+子加载器通过组合来复用父加载器的代码，而不是使用继承。
+在某个类加载器加载class文件时，它首先委托父加载器去加载这个类，依次传递到顶层类加载器(Bootstrap)。
+如果顶层加载不了（它的搜索范围中找不到此类），子加载器才会尝试加载这个类。
+
+双亲委派模型最大的好处就是让Java类同其类加载器一起具备了一种带优先级的层次关系。
+这句话可能不好理解，我们举个例子。
+比如我们要加载顶层的Java类——java.lang.Object类，无论我们用哪个类加载器去加载Object类，这个加载请求最终都会委托给Bootstrap ClassLoader，这样就保证了所有加载器加载的Object类都是同一个类。
+如果没有双亲委派模型，那就乱了套了，完全可以搞出Root::Object和L1::Object这样两个不同的Object类。
+
+双亲委派模型的实现比较简单，在java.lang.ClassLoader的loadClass方法中：
+
+参考:
+[深入探究JVM | 类加载器与双亲委派模型 | 「浮生若梦」 - sczyh30's blog](http://www.sczyh30.com/posts/Java/jvm-classloader-parent-delegation-model/ '0.0')
+
 
 #### JVM的编译优化
+HotSpot中内置了两个即时编译器，分别称为 Client Compiler和 Server Compiler ，或者简称为 C1编译器和 C2编译器。
+[JVM编译优化 - CSDN博客](http://blog.csdn.net/qq_16681169/article/details/72945113 '0.0')
+
 
 #### 对Java内存模型的理解，以及其在并发中的应用
+
+为了定义多线程中共享变量的可见性和保证程序能够对外（多个CPU）提供统一的视图。
+JSL中提到过JVM中“存在”一个主内存，所有的线程共享主内存，而每个线程有自己独立的工作内存，工作内存相互不可见，
+因此java中线程之间的通信实际上使用的是共享内存，另外一种常用的通信方式是消息，
+
+[java内存模型和并发](https://zhuanlan.zhihu.com/p/27361117 '0.0')
 
 #### 指令重排序，内存栅栏等
 
